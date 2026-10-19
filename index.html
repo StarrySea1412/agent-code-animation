@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="color-scheme" content="light"/>
+<meta name="theme-color" content="#faf7f0"/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23faf7f0'/%3E%3Cpath d='M9 3.6v3.2M15 3.6v3.2' stroke='%232c4a7c' stroke-width='2.2' stroke-linecap='round'/%3E%3Cpath d='M6.2 6.8h11.6v3.4a5.8 5.8 0 0 1-11.6 0z' fill='%232c4a7c'/%3E%3Cpath d='M12 16v1.7a2.7 2.7 0 0 0 2.7 2.7h2.3' stroke='%23b7791f' stroke-width='2.2' stroke-linecap='round' fill='none'/%3E%3C/svg%3E"/>
+<meta name="description" content="这一页里所有动的东西——笔迹、星野、排序的柱子、生长的折线——都是一个 Agent 写的代码。代码动画实操手记：五个可玩 demo、一句指令模板、一套截帧验收法。"/>
+<meta name="author" content="StarrySea1412"/>
+<meta property="og:title" content="让 Agent 画动画 · StarrySea1412"/>
+<meta property="og:description" content="五个还在屏幕上跑着的 demo，就是全部证据——代码动画实操手记。"/>
+<meta property="og:type" content="article"/>
+<title>让 Agent 画动画 · StarrySea1412</title>
+<style>
+:root{
+  --paper:#faf7f0;--surface:#fffdf7;--ink:#22262b;--muted:#6d7480;--line:#e0dacb;
+  --blue:#2c4a7c;--blue-soft:#e9eef6;--amber:#b7791f;--amber-soft:#f7e9d2;
+  --serif:"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC",serif;
+  --sans:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  --mono:ui-monospace,"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:28px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.85;-webkit-font-smoothing:antialiased;text-spacing:ideograph-alpha}
+::selection{background:#d9e2ef}
+a{color:var(--blue);text-underline-offset:4px}
+a:hover{color:var(--amber)}
+button,a,input{touch-action:manipulation}
+button{cursor:pointer;color:inherit;font:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-offset:4px}
+img{display:block;max-width:100%;height:auto}
+p{margin:0 0 1.25em}
+h1,h2,h3,h4{line-height:1.45;text-wrap:balance}
+h1,h2,h3{font-family:var(--serif)}
+h2,h3,h4{margin:0}
+strong{font-weight:650}
+code{font-family:var(--mono);font-size:.88em;background:var(--blue-soft);padding:.12em .32em;border-radius:3px;overflow-wrap:anywhere}
+.progress{position:fixed;inset:0 auto auto 0;height:3px;width:100%;background:var(--amber);transform:scaleX(0);transform-origin:left;z-index:30;pointer-events:none}
+.wrap{max-width:1160px;margin:auto;padding-inline:36px}
+/* masthead */
+.masthead{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-block:26px 20px;border-bottom:1px solid var(--ink);font-size:12px;letter-spacing:.12em}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650}
+.brand-mark{width:22px;height:22px;display:block}
+.brand-mark svg{width:100%;height:100%;display:block}
+.edition{color:var(--muted);font-family:var(--mono);letter-spacing:.05em;font-size:11px}
+/* hero */
+.hero{padding-block:68px 54px;display:grid;grid-template-columns:1.15fr .85fr;gap:52px;align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:11px;letter-spacing:.08em;color:var(--muted);margin:0 0 26px;background:var(--surface);border:1px solid var(--line);padding:6px 14px 6px 10px;border-radius:100px}
+.eyebrow span{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.14em;font-weight:600;padding-right:10px;border-right:1px solid var(--line)}
+.eyebrow strong{font-weight:600;color:var(--ink)}
+.hero h1{font-size:clamp(46px,5.4vw,74px);font-weight:800;line-height:1.12;letter-spacing:-.04em;margin:0 0 26px}
+.hero h1 em{display:block;color:var(--blue);font-style:normal;margin-top:4px}
+.hero h1 em .scrib{display:block;width:150px;height:12px;margin-top:5px}
+.dek-wrap{margin:0 0 30px;max-width:520px;border-left:3px solid var(--blue);padding-left:20px}
+.dek-tag{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--blue);letter-spacing:.05em;margin:0 0 10px}
+.dek{font-size:16px;line-height:1.85;color:var(--muted);margin:0}
+.hero-meta{display:flex;gap:8px;flex-wrap:wrap}
+.hero-meta .pill{display:inline-flex;align-items:center;font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--line);padding:6px 14px;border-radius:6px;font-family:var(--mono);letter-spacing:.03em}
+/* figures */
+figure{margin:0}
+.art{max-width:480px;width:100%;margin-inline:auto}
+.art-button{display:block;position:relative;width:100%;border:1px solid #d9d2c1;padding:0;background:#fffdf4;cursor:zoom-in;box-shadow:6px 8px 0 #d8cdb22e;transition:transform .2s}
+.art-button:hover{transform:translateY(-3px)}
+.art-button img{width:100%}
+.art-button .zoom-hint{position:absolute;bottom:10px;right:10px;background:var(--surface);border:1px solid var(--line);padding:3px 8px;font-size:10px;border-radius:4px;box-shadow:0 2px 6px #0002;opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s;pointer-events:none}
+.art-button:hover .zoom-hint,.art-button:focus-visible .zoom-hint{opacity:1;transform:none}
+.art figcaption{font-size:11px;line-height:1.8;color:var(--muted);margin-top:14px}
+.art figcaption b{color:var(--blue);font-weight:500;margin-right:8px}
+.art figcaption small{display:block;font:inherit;margin-top:4px}
+/* opening */
+.opening{max-width:720px;margin:52px auto 0;font-size:17px}
+.opening .lead{font-family:var(--serif);font-size:23px;line-height:1.75;color:var(--blue)}
+.scope{font-size:12px!important;color:var(--muted);border-left:2px solid var(--line);padding-left:17px}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:44px 0 0;padding-top:22px;border-top:1px dashed var(--line)}
+.toc a{display:inline-flex;align-items:baseline;gap:7px;font-size:12.5px;color:var(--muted);text-decoration:none;border:1px solid var(--line);background:var(--surface);padding:7px 13px;border-radius:100px}
+.toc a b{font-family:var(--mono);font-weight:600;font-size:10.5px;color:var(--amber)}
+.toc a:hover{color:var(--blue);border-color:#b9c7dd}
+/* chapters */
+.chapter{margin-top:84px;padding-top:44px;border-top:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='8' viewBox='0 0 160 8'%3E%3Cpath d='M2 4.5 C 22 1.8, 42 7, 62 4.5 S 102 1.8, 122 4.5 S 152 7, 158 4.5' fill='none' stroke='%2322262b' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:repeat-x;background-position:top left;background-size:160px 8px}
+.chapter-head{display:grid;grid-template-columns:110px 1fr;gap:20px;margin-bottom:40px;align-items:start}
+.chapter-no{font-family:var(--serif);font-size:74px;font-weight:400;color:#cdc4ad;line-height:1;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.chapter-no .ch-ic{width:46px;height:46px;flex:none}
+.chapter-label{font-family:var(--mono);letter-spacing:.16em;font-size:10px;color:var(--amber);margin-bottom:9px}
+.chapter-stamp{display:inline-block;margin-top:15px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--amber);border:1px solid currentColor;padding:3px 8px;transform:rotate(-2deg)}
+.chapter-head h2{font-size:36px;letter-spacing:-.02em}
+.chapter-head p{font-size:15px;color:var(--muted);margin:12px 0 0;max-width:660px}
+.reading{max-width:720px;margin-inline:auto;font-size:16px}
+.reading>h3{font-size:23px;margin:38px 0 18px}
+.reading>h4{font-size:17px;margin:28px 0 13px}
+.note{font-size:13px;line-height:1.85;border-left:3px solid var(--blue);padding:13px 18px;background:var(--blue-soft);margin:26px 0}
+.note p:last-child{margin-bottom:0}
+.note small{display:block;color:var(--muted);margin-top:6px}
+/* checkup card */
+.checkup{margin:30px 0;border:1px solid var(--ink);background:var(--surface);padding:26px 28px 22px}
+.checkup-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px dashed #b9b09a;padding-bottom:14px;margin-bottom:6px}
+.checkup-head h3{font-size:20px}
+.checkup-head small{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em}
+.checkup-row{display:grid;grid-template-columns:1.1fr 1.4fr 1fr;gap:10px;font-size:13px;padding:11px 0;border-bottom:1px solid #efe9dc;align-items:baseline}
+.checkup-row span:last-child{text-align:right;color:var(--muted);font-size:12px}
+.checkup-row .dot{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px}
+.checkup-row .dot svg{width:16px;height:16px;flex:none}
+.dot-alive{color:var(--blue)}
+.dot-observe{color:var(--amber)}
+.dot-suspect{color:var(--muted)}
+.dot-dead{color:#9aa0a6}
+.checkup-foot{display:flex;justify-content:space-between;align-items:center;margin-top:16px}
+.checkup-foot .stamp{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--amber);border:1px solid currentColor;padding:4px 10px;transform:rotate(-3deg)}
+.checkup-foot small{color:var(--muted);font-size:11px}
+/* death taxonomy */
+.death-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:28px 0}
+.death-card{border:1px solid var(--line);background:var(--surface);padding:18px 20px}
+.death-card small{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.08em}
+.death-card b{display:block;font-size:15px;margin:6px 0 8px}
+.death-card p{font-size:13px;color:var(--muted);margin:0;line-height:1.8}
+.death-card:last-child{grid-column:1/-1}
+.death-icon{width:40px;height:40px;display:block;margin-bottom:12px}
+/* formula */
+.formula{margin:28px 0;padding:26px 28px;background:var(--blue);color:#f2f4ef}
+.formula .diagram-label{color:#b9c7dd;margin-bottom:14px}
+.formula p{font-family:var(--serif);font-size:21px;line-height:1.6;margin:0}
+.formula small{display:block;color:#c3cede;font-size:11px;margin-top:12px}
+.diagram-label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--muted)}
+/* compare table */
+.table-wrap{overflow-x:auto;margin:26px 0;border-block:1px solid var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.8;min-width:520px;text-align:left}
+th{font-weight:650;color:var(--blue);padding:13px 16px;background:var(--blue-soft);white-space:nowrap}
+td{padding:14px 16px;border-top:1px solid var(--line);vertical-align:top}
+td:first-child{font-weight:600;width:38%}
+caption{text-align:left;padding:12px 0;font-size:12px;color:var(--muted)}
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);margin:28px 0}
+.steps>div{padding:22px 20px;background:var(--surface)}
+.steps>div+div{border-left:1px solid var(--line)}
+.steps small{font-family:var(--mono);font-size:10px;color:var(--amber)}
+.steps .step-ic{width:34px;height:34px;display:block;margin-bottom:12px}
+.steps h4{font-size:17px;margin:8px 0 8px}
+.steps p{font-size:12.5px;color:var(--muted);margin:0;line-height:1.8}
+.steps code{font-size:11px}
+/* cooling */
+.cooling{margin:8px 0 26px;border-block:1px solid var(--line);font-size:13.5px}
+.cooling-row{display:grid;grid-template-columns:110px 1fr;gap:14px;padding:12px 4px;border-bottom:1px solid #efe9dc;align-items:baseline}
+.cooling-row:last-child{border-bottom:0}
+.cooling-row small{font-family:var(--mono);font-size:12px;color:var(--amber)}
+/* principles */
+.principles-list{counter-reset:pin;margin:26px 0;padding:0;list-style:none}
+.principles-list li{counter-increment:pin;position:relative;padding:0 0 18px 52px;font-size:14.5px}
+.principles-list li:last-child{padding-bottom:0}
+.principles-list li:before{content:"0" counter(pin);position:absolute;left:0;top:2px;font-family:var(--mono);font-size:12px;color:var(--amber);border:1px solid currentColor;padding:2px 6px}
+.principles-list b{display:block;font-size:15.5px;margin-bottom:6px}
+.principles-list p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.85}
+/* template/code block */
+.template{margin:26px 0;background:#eef1ea;border:1px solid #d5dccd}
+.template-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:11px 18px;border-bottom:1px solid #d5dccd;font-size:11px;color:var(--blue)}
+.copy-button{border:1px solid #8ba0bf;border-radius:3px;background:var(--surface);padding:5px 14px;min-height:34px;font-size:11px}
+.copy-button:hover{background:var(--blue);color:#fff}
+.template pre{font-family:var(--mono);font-size:12.5px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;padding:18px 22px}
+.copy-status{font-size:11px;color:var(--muted);padding:0 22px;margin:0}
+.copy-status:not(:empty){padding-bottom:14px}
+/* checklist */
+.checklist{margin:26px 0}
+.check-item{display:flex;gap:14px;align-items:flex-start;border:1px solid var(--line);background:var(--surface);padding:15px 18px;margin-bottom:10px;cursor:pointer;transition:background .15s}
+.check-item:hover{background:#fbf9f2}
+.check-item input{appearance:none;-webkit-appearance:none;flex:none;width:20px;height:20px;margin-top:4px;border:1.5px solid var(--ink);background:var(--surface);border-radius:4px;cursor:pointer;position:relative;transition:background .15s}
+.check-item input:checked{background:var(--blue);border-color:var(--blue)}
+.check-item input:checked:after{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg)}
+.check-item span{font-size:14px;line-height:1.8}
+.check-item b{display:block}
+.check-item small{color:var(--muted);font-size:12.5px}
+.check-item input:checked ~ span{opacity:.45}
+/* ending */
+.ending{margin-top:90px;padding-top:38px;border-top:1px solid var(--ink);max-width:720px;margin-inline:auto}
+.ending h2{font-size:30px;margin-bottom:18px}
+.quickcard{margin:30px 0;background:var(--ink);color:#efece2;padding:26px 28px}
+.quickcard .diagram-label{color:#a8a294;margin-bottom:14px}
+.quickcard ul{margin:0;padding-left:20px}
+.quickcard li{font-size:13.5px;margin:7px 0;line-height:1.8}
+.quickcard li::marker{color:var(--amber)}
+.quickcard code{background:#3a4048;color:#e6e2d6}
+/* footer */
+.site-foot{margin-top:70px;border-top:1px solid var(--line);padding:26px 0 46px;display:flex;justify-content:space-between;gap:18px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.site-foot .foot-meta{font-family:var(--mono);letter-spacing:.04em}
+.print-button{border:1px solid var(--ink);background:var(--surface);padding:8px 18px;font-size:12px;min-height:38px}
+.print-button:hover{background:var(--ink);color:var(--surface)}
+/* lightbox */
+.lightbox{position:fixed;inset:0;background:#171a1dde;display:none;align-items:center;justify-content:center;z-index:60;padding:30px}
+.lightbox.open{display:flex}
+.lightbox img{max-width:92vw;max-height:88vh;width:auto;box-shadow:0 20px 60px #0008;background:#fffdf4}
+.lightbox-hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);color:#e8e4d8;font-size:12px;font-family:var(--mono);background:#00000055;padding:6px 14px;border-radius:100px}
+.lightbox-close{position:fixed;top:18px;right:22px;background:none;border:1px solid #e8e4d888;color:#e8e4d8;font-size:14px;padding:6px 14px;border-radius:100px}
+.lightbox-close:hover{background:#e8e4d822}
+/* motion */
+.hero h1 em .scrib path{stroke-dasharray:1;stroke-dashoffset:1;animation:scrib-draw 1s .4s cubic-bezier(.65,.05,.35,1) forwards}
+@keyframes scrib-draw{to{stroke-dashoffset:0}}
+.ch-ic,.death-icon,.step-ic{transition:transform .4s cubic-bezier(.2,.8,.3,1.15)}
+.fx{opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .7s cubic-bezier(.2,.8,.3,1.15)}
+.fx-in{opacity:1;transform:none}
+.death-grid .death-card:nth-child(2) .fx{transition-delay:.08s}
+.death-grid .death-card:nth-child(3) .fx{transition-delay:.16s}
+.death-grid .death-card:nth-child(4) .fx{transition-delay:.24s}
+.death-grid .death-card:nth-child(5) .fx{transition-delay:.32s}
+.steps>div:nth-child(2) .fx{transition-delay:.12s}
+.steps>div:nth-child(3) .fx{transition-delay:.24s}
+@media (hover:hover){
+.death-card:hover .death-icon,.steps>div:hover .step-ic,.chapter-head:hover .ch-ic{transform:rotate(-5deg) scale(1.07)}
+}
+.dot-alive svg{animation:dot-breathe 2.4s ease-in-out infinite}
+@keyframes dot-breathe{0%,100%{opacity:1}50%{opacity:.45}}
+@media (prefers-reduced-motion: reduce){
+.hero h1 em .scrib path{animation:none;stroke-dashoffset:0}
+.dot-alive svg{animation:none}
+.fx{opacity:1;transform:none;transition:none}
+}
+
+/* print */
+@media print{
+  .progress,.masthead,.print-button,.art-button .zoom-hint,.lightbox{display:none!important}
+  body{background:#fff}
+  .chapter{page-break-inside:auto}
+  .chapter-head,h2,h3{page-break-after:avoid}
+  .art-button{box-shadow:none;cursor:default}
+  .hero{padding-block:30px}
+}
+@media (max-width:880px){
+  .wrap{padding-inline:22px}
+  .hero{padding-block:44px 30px;gap:30px}
+  .death-grid{grid-template-columns:1fr}
+  .death-card:last-child{grid-column:auto}
+  .steps{grid-template-columns:1fr}
+  .steps>div+div{border-left:0;border-top:1px solid var(--line)}
+  .chapter-head{grid-template-columns:64px 1fr}
+  .chapter-no{font-size:52px}
+  .chapter-no .ch-ic{width:34px;height:34px}
+  .chapter-head h2{font-size:28px}
+  .checkup-row{grid-template-columns:1fr;gap:2px}
+  .checkup-row span:last-child{text-align:left}
+}
+@media (max-width:720px){
+  .hero{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<header class="wrap masthead">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M9 3.2v3.4M15 3.2v3.4" stroke="#2c4a7c" stroke-width="2.2" stroke-linecap="round"/><path d="M6.2 6.6h11.6v3.4a5.8 5.8 0 0 1-11.6 0z" fill="#2c4a7c"/><path d="M12 15.6v1.8a2.7 2.7 0 0 0 2.7 2.7h2.3" stroke="#b7791f" stroke-width="2.2" stroke-linecap="round"/></svg></span>STARRYSEA · 造物手记</div>
+  <div class="edition">FIELD NOTES · 2026.10</div>
+</header>
+
+<style>
+/* ===== demo 组件（本页专用） ===== */
+.demo{max-width:720px;margin:36px auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 22px 16px;box-shadow:5px 7px 0 #d8cdb22e}
+.demo .demo-tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--amber);margin:0 0 14px;text-align:center}
+.demo-stage{background:#10203c;border:1px solid #243453;border-radius:10px;overflow:hidden;margin:0 auto 14px}
+.demo-stage canvas{display:block;width:100%;height:auto}
+.demo-ctrl{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:center;align-items:center;font-size:12px;color:var(--muted)}
+.demo-ctrl label{display:inline-flex;align-items:center;gap:7px}
+.demo-ctrl input[type=range]{width:104px;accent-color:var(--amber)}
+.demo-ctrl b{font-family:var(--mono);font-weight:600;color:var(--blue);min-width:46px;font-size:11.5px}
+.demo-btn{font-family:var(--serif);font-size:13px;letter-spacing:.08em;color:var(--blue);background:none;border:1px solid #b9c7dd;border-radius:100px;padding:7px 18px;cursor:pointer;transition:background .25s,color .25s}
+.demo-btn:hover{background:var(--blue);color:#fff}
+.demo-btn.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.demo-btn:disabled{opacity:.4;cursor:default}
+.demo-kpi{display:flex;align-items:baseline;gap:10px;justify-content:center;margin:2px 0 8px}
+.demo-kpi .num{font-family:var(--mono);font-size:clamp(30px,5vw,42px);font-weight:600;color:var(--gold);letter-spacing:-.02em}
+.demo-kpi .unit{font-size:12.5px;color:var(--muted)}
+#d1path,#d1path2{stroke-dasharray:1;stroke-dashoffset:0}
+#d1svg.d1play #d1path{animation:d1draw var(--d1dur,1.4s) cubic-bezier(.65,.05,.35,1) forwards}
+#d1svg.d1play #d1path2{animation:d1draw calc(var(--d1dur,1.4s) * .9) .25s cubic-bezier(.65,.05,.35,1) forwards}
+@keyframes d1draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+#d4line{stroke-dasharray:1;stroke-dashoffset:0}
+#d4svg.d4play #d4line{animation:d1draw 1.6s cubic-bezier(.5,.06,.3,1) forwards}
+.demo-caption{font-size:11.5px;color:var(--muted);text-align:center;margin:10px 0 0;font-family:var(--mono)}
+.demo-caption b{color:var(--blue)}
+@media (prefers-reduced-motion: reduce){
+  #d1svg.d1play #d1path,#d1svg.d1play #d1path2,#d4svg.d4play #d4line{animation:none;stroke-dashoffset:0}
+}
+</style>
+
+<section class="wrap hero">
+  <div>
+    <p class="eyebrow"><span>造物手记</span><strong>写给想让代码动起来的人</strong></p>
+    <h1>让 Agent <em>画动画<svg class="scrib" viewBox="0 0 140 12" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M3 8 C 28 3, 55 11, 84 6 S 126 3, 137 7" fill="none" stroke="#b7791f" stroke-width="3.6" stroke-linecap="round"/></svg></em></h1>
+    <div class="dek-wrap">
+      <p class="dek-tag">dek / 摘要</p>
+      <p class="dek">这一页里能看到的一切动的东西——自绘的笔迹、呼吸的星野、排序的柱子、生长的折线——都不是录屏，也不是 GIF：它们是一个 Agent 写的代码，此刻正在你的屏幕上活着跑。</p>
+    </div>
+    <div class="hero-meta">
+      <span class="pill">约 25 分钟</span>
+      <span class="pill">4 章 · 5 个活 demo</span>
+      <span class="pill">更新于 2026.10.19</span>
+    </div>
+  </div>
+  <figure class="art">
+    <button class="art-button" type="button" aria-label="放大查看插图"><img src="assets/fig-hero.webp" alt="涂鸦：小机器人坐在画架前，画笔是一枚巨大的花括弧" loading="eager"/><span class="zoom-hint">点击放大 · Esc 关闭</span></button>
+    <figcaption><b>图 0</b>画笔是代码，画布是浏览器。<small>doodle · 造物手记插图</small></figcaption>
+  </figure>
+</section>
+
+<main>
+<div class="wrap">
+<div class="opening">
+  <p class="lead">先给论点，再上证据。如果你只从这一页带走一句话，我希望是这句：对 Agent 来说，最顺手的画笔，是代码。</p>
+  <p>视频和 GIF 是一次性的——拍完、导出、定格，改一个节奏就得重新渲染一遍；代码动画是活的——改一个数字，速度变了；加一个滑杆，观众也能上手调；下一次迭代，Agent 自己就能验收：跑起来、截一帧、看一眼、再改。这篇文章里的五个 demo 都是现写的代码，你现在就能玩。</p>
+  <p class="scope">本页全部动画（包括你现在正看着的入场效果）都由一个做文章的 Agent 现场编写；五个 demo 可在浏览器里直接操作；文末列出所引用的工具与技能。</p>
+</div>
+  <nav class="toc" aria-label="章节索引">
+    <a href="#ch1"><b>01</b>为什么是代码</a>
+    <a href="#ch2"><b>02</b>五个招式</a>
+    <a href="#ch3"><b>03</b>验收循环</a>
+    <a href="#ch4"><b>04</b>边界与反例</a>
+  </nav>
+</div>
+
+<div class="wrap">
+<section class="chapter" id="ch1">
+  <div class="chapter-head">
+    <div class="chapter-no"><svg class="ch-ic" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M14 10c-4 0-6 3-6 7v4c0 3-2 4-3.5 5 1.5 1 3.5 2 3.5 5v4c0 4 2 7 6 7" stroke="#2c4a7c" stroke-width="2.4" stroke-linecap="round" fill="none"/><path d="M34 10c4 0 6 3 6 7v4c0 3 2 4 3.5 5-1.5 1-3.5 2-3.5 5v4c0 4-2 7-6 7" stroke="#2c4a7c" stroke-width="2.4" stroke-linecap="round" fill="none"/><circle cx="24" cy="24" r="4.2" fill="#b7791f"/></svg><span>01</span></div>
+    <div>
+      <p class="chapter-label">WHY CODE</p>
+      <h2>为什么是代码：四个别的媒介给不了的</h2>
+      <p>动画的载体一直在变：手绘胶片 → 数字帧 → 代码。变化的不是表现力，是"谁能改、改得多快"。</p>
+      <span class="chapter-stamp">造物手记 · 01</span>
+    </div>
+  </div>
+  <div class="reading">
+    <p>代码动画不是新玩具：从 Flash 到 AE 表达式到 shader 玩具，工程师一直用代码控制运动。真正的变化发生在最近两年——<strong>写代码的"人"变成了 Agent</strong>，而动画恰好是它能"全链路自检"的少数媒介之一。先说结论，再列账单：</p>
+    <div class="table-wrap">
+      <table>
+        <caption>同一段 10 秒的动效，两种媒介的账</caption>
+        <thead><tr><th>维度</th><th>视频 / GIF</th><th>代码动画</th></tr></thead>
+        <tbody>
+          <tr><td>体积</td><td>几 MB 到几十 MB</td><td>几 KB 到几十 KB</td></tr>
+          <tr><td>清晰度</td><td>受渲染分辨率限制</td><td>无限，随屏幕缩放</td></tr>
+          <tr><td>参数化</td><td>改一帧？重新导出</td><td>改一行，立刻生效</td></tr>
+          <tr><td>交互</td><td>只能播放</td><td>观众也能上手调</td></tr>
+          <tr><td>版本管理</td><td>二进制 diff 无意义</td><td>每次修改都可回看、可回滚</td></tr>
+          <tr><td>生成成本</td><td>拍摄、剪辑、渲染</td><td>Agent 秒级迭代</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>行业里已经有人把这件事做成产品。两个信号值得注意：</p>
+  </div>
+  <div class="death-grid">
+    <div class="death-card"><svg class="death-icon" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="6" y="10" width="28" height="20" rx="3" fill="#e9eef6" stroke="#2c4a7c" stroke-width="2.2"/><path d="M6 16h28M6 24h28" stroke="#2c4a7c" stroke-width="1.6" opacity=".5"/><path d="M16 10v20M24 10v20" stroke="#2c4a7c" stroke-width="1.2" opacity=".3"/><path d="M30 30l6 6M36 30l-6 6" stroke="#b7791f" stroke-width="2.2" stroke-linecap="round"/></svg><small>SIGNAL 01</small><b>Remotion：代码就是一切</b><p>64K stars 的 React 视频框架，口号是「Code is always the source of truth」；官网首页第一屏就在教你「用你的 coding agent 把想法变成视频」，还配了 Agent Skills 与插件。</p></div>
+    <div class="death-card"><svg class="death-icon" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M12 8h16v24H12z" fill="#e9eef6" stroke="#2c4a7c" stroke-width="2.2"/><path d="M16 14h8M16 19h8M16 24h5" stroke="#2c4a7c" stroke-width="1.8" stroke-linecap="round" opacity=".6"/><path d="M28 20l5 3-5 3" stroke="#b7791f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><small>SIGNAL 02</small><b>Motion Canvas：描述"进行到哪一步"</b><p>用 TypeScript 生成器函数写动画：控制的是时长、速度与加速度，而不是硬编码关键帧；Vite 实时预览，改一行立刻看到——本质上是给"可迭代"设计的动画语言。</p></div>
+  </div>
+  <div class="reading">
+    <div class="note"><p>我这台机器上还装着两个更垂直的 Agent Skill：<strong>machine-skill</strong>（一句话生成单文件 HTML 物理仿真机器——我照它的流程造过一台 CG125 顶杆机的剖切台架，气门浮起的转速是解 ODE 算出来的）；<strong>3dviz-pro-max</strong>（★792 的 3D 场景技能，十步工作流里明明白白写着一步「跑起来、截帧、自审」）。它们不约而同地把"生成完必须自己看帧"写进流程——这不是巧合。</p></div>
+    <p>对 Agent 来说，"能写、能跑、能看、能改"四件事闭合的媒介才值得批量生产。代码动画恰好全占：<strong>能写</strong>是代码，<strong>能跑</strong>是浏览器，<strong>能看</strong>是截帧，<strong>能改</strong>是参数化。下面五个招式，每一招都给你一句可以直接抄给 Agent 的指令。</p>
+  </div>
+</section>
+</div>
+
+<div class="wrap">
+<section class="chapter" id="ch2">
+  <div class="chapter-head">
+    <div class="chapter-no"><svg class="ch-ic" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M10 38L30 14l6 5-20 24-8 3z" fill="#e9eef6" stroke="#2c4a7c" stroke-width="2" stroke-linejoin="round"/><path d="M30 14l5-6 6 5-5 6" fill="#fffdf7" stroke="#2c4a7c" stroke-width="2" stroke-linejoin="round"/><path d="M8 44l4-9 5 5z" fill="#b7791f"/><circle cx="38" cy="34" r="2" fill="#b7791f"/><circle cx="43" cy="24" r="1.4" fill="#b7791f"/></svg><span>02</span></div>
+    <div>
+      <p class="chapter-label">FIVE MOVES</p>
+      <h2>五个招式：从一条笔迹到一片星野</h2>
+      <p>下面每个 demo 都是独立的小世界——能跑、能调、能重播。每个后面附一句"指令模板"：就是把它交给 Agent 时，你说的话的大致形状。</p>
+      <span class="chapter-stamp">每个都能玩 · 05</span>
+    </div>
+  </div>
+  <div class="reading">
+    <h3>招式一 · 手写笔触</h3>
+    <p>最古老的代码动画是"让线自己长出来"。原理一句话：把路径长度归一化成 1，用 <code>stroke-dasharray</code> 把整条线藏进第一段虚线，再让 <code>dashoffset</code> 从 1 走到 0——线的末端就成了笔尖。这是 SVG 绘制动画的祖师爷，也是 Agent 最容易做对的第一个动画。</p>
+  </div>
+  <div class="demo">
+    <p class="demo-tag">DEMO 01 · 手写笔触</p>
+    <div class="demo-stage" style="padding:10px 0">
+      <svg id="d1svg" viewBox="0 0 560 120" style="width:100%;display:block" aria-label="手写笔触动画">
+        <path id="d1path" pathLength="1" d="M20 78 C 80 26 150 100 220 58 S 360 14 420 66 S 520 96 540 58" fill="none" stroke="#e6b95c" stroke-width="4.5" stroke-linecap="round"/>
+        <path id="d1path2" pathLength="1" d="M60 92 C 160 106 360 96 500 88" fill="none" stroke="#7fa3d4" stroke-width="2.4" stroke-linecap="round" opacity=".75"/>
+      </svg>
+    </div>
+    <div class="demo-ctrl">
+      <button class="demo-btn" id="d1btn" type="button">重播</button>
+      <label>时长 <input id="d1dur" type="range" min="0.4" max="3" step="0.1" value="1.4"/><b id="d1durv">1.4s</b></label>
+    </div>
+  </div>
+  <div class="reading">
+    <div class="template">
+      <div class="template-head"><span>指令模板 · 手写笔触</span><button class="copy-button" type="button">复制</button></div>
+      <pre><code>用纯 SVG 做一段"手写笔触"动画：
+
+1. 一条带手写质感的波浪线（三次贝塞尔），配 pathLength="1"，
+   以 stroke-dashoffset 从 1 → 0 画出来；
+2. 时长用 CSS 变量控制（0.4–3s 可调，页面给个滑杆）；
+3. 下面叠一条更细、更浅的第二笔，延迟 0.25s 画完；
+4. "重播"按钮：先移除动画类、强制重排、再加回来；
+5. prefers-reduced-motion 时直接显示成品，不播动画。</code></pre>
+      <p class="copy-status"></p>
+    </div>
+    <div class="note"><p>验收要点：<strong>中帧体检</strong>。时长拉到 3 秒，在 1.5 秒处截一帧——你应该看到"画到一半"的线。如果中帧是空白，说明 dasharray 没归一化；如果中帧就是整条线，说明动画根本没跑，你看到的只是终态。</p></div>
+  </div>
+
+  <div class="reading">
+    <h3>招式二 · 呼吸的星野</h3>
+    <p>第二个招式是所有"氛围感"的底座：粒子。星野、雪、尘埃、数据流，本质是同一套结构——一堆带独立相位的小点、一个正弦时钟、再加一点视差。它的参数面天生就宽：数量、速度、幅度。而参数面越宽，越值得把控制权交给观众。</p>
+  </div>
+  <div class="demo">
+    <p class="demo-tag">DEMO 02 · 呼吸的星野</p>
+    <div class="demo-stage"><canvas id="d2" width="1280" height="500"></canvas></div>
+    <div class="demo-ctrl">
+      <label>密度 <input id="d2n" type="range" min="60" max="400" step="10" value="180"/><b id="d2nv">180</b></label>
+      <label>速度 <input id="d2s" type="range" min="0" max="2" step="0.05" value="1"/><b id="d2sv">1.0×</b></label>
+      <label>视差 <input id="d2p" type="range" min="0" max="2" step="0.1" value="1"/><b id="d2pv">1.0</b></label>
+    </div>
+    <p class="demo-caption">把密度拉满、速度归零、再慢慢推回——极端参数是给动画体检最快的方式。</p>
+  </div>
+  <div class="reading">
+    <div class="template">
+      <div class="template-head"><span>指令模板 · 呼吸的星野</span><button class="copy-button" type="button">复制</button></div>
+      <pre><code>做一个 canvas 星空，强调"可调"：
+
+1. 星星数量默认 180、可调 60–400；每颗有独立相位，
+   亮度用正弦呼吸；少数大星画成十字光芒；
+2. 指针在画布上移动产生视差，越"深"的星位移越小；
+3. 速度乘数 0–2×（0 时完全静止，但渲染循环照常）；
+4. 适配 devicePixelRatio（封顶 2×），resize 时重建；
+5. 页面切到后台时暂停 rAF，回到前台恢复。</code></pre>
+      <p class="copy-status"></p>
+    </div>
+    <div class="note"><p>验收要点：<strong>极端参数法</strong>。密度拉满、速度归零，截一帧——静止帧也应该好看（说明分布与亮度是设计过的，不是随机碰运气）；然后速度拉满，确认没有撕裂、没有掉帧。</p></div>
+  </div>
+
+  <div class="reading">
+    <h3>招式三 · 排序竞速</h3>
+    <p>第三个招式人见人爱：算法可视化。它把不可见的计算过程翻译成可见的运动。做对的关键不在"画"，在架构——<strong>算法只负责把操作录下来，播放器负责表演</strong>。这样速度可以倍速、可以回放、可以换算法对比，而算法的正确性完全不受动画影响。</p>
+  </div>
+  <div class="demo">
+    <p class="demo-tag">DEMO 03 · 排序竞速</p>
+    <div class="demo-stage"><canvas id="d3" width="1280" height="440"></canvas></div>
+    <div class="demo-ctrl">
+      <button class="demo-btn" id="d3new" type="button">新数组</button>
+      <button class="demo-btn" id="d3bubble" type="button">冒泡</button>
+      <button class="demo-btn" id="d3insert" type="button">插入</button>
+      <button class="demo-btn" id="d3quick" type="button">快排</button>
+      <label>速度 <input id="d3sp" type="range" min="1" max="60" step="1" value="18"/><b id="d3spv">18/秒</b></label>
+    </div>
+    <p class="demo-caption" id="d3stat">等待开始——比较 0 · 交换 0</p>
+  </div>
+  <div class="reading">
+    <div class="template">
+      <div class="template-head"><span>指令模板 · 排序竞速</span><button class="copy-button" type="button">复制</button></div>
+      <pre><code>把排序算法做成柱状图动画：
+
+1. 40 根随机高度的柱子；算法（冒泡/插入/快排）只做一件事：
+   把每一次"比较"和"交换"按顺序记录成操作序列，不碰画面；
+2. 播放器按速度倍率（1–60 步/秒）消费操作序列：
+   比较 = 琥珀高亮，交换 = 红色闪烁，已完成区间 = 深蓝；
+3. 结束后程序化断言 isSorted(arr) 为真，并把比较/交换次数
+   打在图上——正确性优先于好看；
+4. 速度中途可调；"新数组"重洗后不残留任何状态。</code></pre>
+      <p class="copy-status"></p>
+    </div>
+    <div class="note"><p>验收要点：最好的验收是<strong>断言</strong>，不是眼睛。排序结束时由代码自己证明"真的有序"；眼睛只负责检查高亮是否落在正确的两根柱子上——观察和计算各管一摊。</p></div>
+  </div>
+</section>
+</div>
+
+<div class="wrap">
+<section class="chapter" id="ch2b" style="margin-top:0;padding-top:0;background-image:none">
+  <div class="reading" style="padding-top:8px">
+    <h3>招式四 · 数据生长</h3>
+    <p>第四个招式最实用：让数据动起来。数字滚动、折线生长、瀑布流入——报表和复盘视频里的"高级感"，大部分就是这两件事的排列组合。<strong>唯一不能让步的是诚实</strong>：数字最终必须精确等于真实值，动画的最后一帧永远输给断言。</p>
+  </div>
+  <div class="demo">
+    <p class="demo-tag">DEMO 04 · 数据生长</p>
+    <div class="demo-stage" style="padding:18px 18px 8px">
+      <div class="demo-kpi"><span class="num" id="d4num">0</span><span class="unit">次生成 · 本季度</span></div>
+      <svg id="d4svg" viewBox="0 0 640 170" style="width:100%;display:block" aria-label="折线生长动画">
+        <path d="M30 148 H610 M30 148 V26" stroke="#2a3b5e" stroke-width="2"/>
+        <path d="M30 118 H610" stroke="#2a3b5e" stroke-width="1" opacity=".45"/>
+        <path d="M30 88 H610" stroke="#2a3b5e" stroke-width="1" opacity=".45"/>
+        <path d="M30 58 H610" stroke="#2a3b5e" stroke-width="1" opacity=".45"/>
+        <path id="d4line" pathLength="1" d="M30 136 C 120 130 180 112 240 98 S 360 84 420 56 S 560 32 610 30" fill="none" stroke="#e6b95c" stroke-width="4" stroke-linecap="round"/>
+        <circle id="d4dot" cx="610" cy="30" r="6" fill="#e6b95c" opacity="0"/>
+      </svg>
+    </div>
+    <div class="demo-ctrl">
+      <button class="demo-btn" id="d4btn" type="button">播放一遍</button>
+      <label>目标值 <input id="d4t" type="range" min="10000" max="500000" step="10" value="128410"/><b id="d4tv">128,410</b></label>
+    </div>
+    <p class="demo-caption" id="d4stat">数字与折线在同一时刻结束——这是规格，不是巧合。</p>
+  </div>
+  <div class="reading">
+    <div class="template">
+      <div class="template-head"><span>指令模板 · 数据生长</span><button class="copy-button" type="button">复制</button></div>
+      <pre><code>做一个"数据生长"动画卡：
+
+1. 大数字从 0 缓动到目标值（easeOutExpo，1.6s），
+   同时下方折线用 stroke-dashoffset 从左往右生长；
+2. 两者必须在同一时刻结束（同一个时长的两段动画）；
+3. 结束后程序化断言"显示值 === 目标值"，并让终点圆点亮起；
+4. 目标值用滑杆可调，改动后自动重播；
+5. 数字要带千分位，滚动过程也不乱跳。</code></pre>
+      <p class="copy-status"></p>
+    </div>
+    <div class="note"><p>验收要点：<strong>终点对齐</strong>。数字停在 128,410 的那一刻，折线必须刚好到顶——如果数字先停、线还在爬（或反过来），说明两个动画没有共用时间轴。截"最后一秒内"的两帧对比即可看出。</p></div>
+  </div>
+
+  <div class="reading">
+    <h3>招式五 · 重力与风</h3>
+    <p>最后一个招式是"手感"：物理。粒子喷泉、碎屑、弹跳——代价是要和一条铁律打交道：<strong>运动必须按时间步长归一化</strong>（dt），不能按帧计数，否则在 120Hz 屏幕上一切都会快一倍。给 Agent 的指令里，这一条要写在第一行。</p>
+  </div>
+  <div class="demo">
+    <p class="demo-tag">DEMO 05 · 重力与风</p>
+    <div class="demo-stage"><canvas id="d5" width="1280" height="440"></canvas></div>
+    <div class="demo-ctrl">
+      <label>重力 <input id="d5g" type="range" min="0" max="3" step="0.05" value="1"/><b id="d5gv">1.0</b></label>
+      <label>风 <input id="d5w" type="range" min="-3" max="3" step="0.1" value="0.4"/><b id="d5wv">0.4</b></label>
+      <button class="demo-btn" id="d5burst" type="button">来一发</button>
+    </div>
+    <p class="demo-caption">点击画布任意处爆开一簇粒子；两个滑杆实时生效。</p>
+  </div>
+  <div class="reading">
+    <div class="template">
+      <div class="template-head"><span>指令模板 · 重力与风</span><button class="copy-button" type="button">复制</button></div>
+      <pre><code>做一个 canvas 粒子喷泉：
+
+1. 点击处爆开 60 颗粒子，初速度随机向上扇形；
+2. 重力与风两个滑杆实时生效：v += (g, wind) * dt；
+3. 着地反弹并衰减（vy *= -0.6），寿命结束后淡出移除；
+4. 运动必须按时间步长 dt 归一化（dt = 两帧时间差，
+   封顶 0.033s），严禁按帧计数；
+5. 粒子总数设上限（如 800），超出时移除最旧的。</code></pre>
+      <p class="copy-status"></p>
+    </div>
+    <div class="note"><p>验收要点：把浏览器窗口切到 120Hz 屏或拉低 CPU 模拟慢速，运动速度应该<strong>不变</strong>——这是 dt 归一化的现场考试；另外把"重力归零、风拉满"，粒子应该水平流走而不是诡异下坠。</p></div>
+  </div>
+</section>
+</div>
+
+<div class="wrap">
+<section class="chapter" id="ch3">
+  <div class="chapter-head">
+    <div class="chapter-no"><svg class="ch-ic" viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle cx="21" cy="21" r="12" fill="#e9eef6" stroke="#2c4a7c" stroke-width="2.2"/><path d="M30 30l10 10" stroke="#2c4a7c" stroke-width="2.6" stroke-linecap="round"/><path d="M16 21l3.5 3.5 6.5-7" stroke="#b7791f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>03</span></div>
+    <div>
+      <p class="chapter-label">VERIFY LOOP</p>
+      <h2>验收循环：写、跑、截帧、改</h2>
+      <p>动画写完只算一半——另一半是验收。这四个字里，藏着一整个方法论。</p>
+      <span class="chapter-stamp">验收方法论</span>
+    </div>
+  </div>
+  <div class="reading">
+    <ol class="principles-list">
+      <li><b>跑起来才算数</b><p>语法过、构建过都不算数；动画要在浏览器里真的动起来。最快的方式：打开它，把每一个按钮都点一遍。</p></li>
+      <li><b>截帧，而且专截中帧</b><p>终帧会骗人——进度条到头、动画静止的最后一眼，往往完美无瑕。真正的 bug 都藏在过程里。给动画做"半程体检"：在 30%、60% 处各截一帧。</p></li>
+      <li><b>参数拉极端</b><p>速度归零、速度拉满、密度拉爆、数值设为 0……极端参数下不崩、不丑、不 NaN，是动画上线的底线。</p></li>
+      <li><b>改的不是像素，是参数</b><p>节奏不对？调的是参数、时长与缓动曲线，而不是"把第 43 帧往前挪两帧"。可参数化的动画，讨论的粒度是"秒"和"倍率"，不是"帧"。</p></li>
+    </ol>
+    <div class="note"><p>一个真实的例子（就发生在做这个页面的过程中）：给文章做滚动入场动画时，<strong>终帧截图一切正常</strong>——但在 320 毫秒处截的那一帧里，页面元素全都还在隐身。问题由此现形：某种"观察机制"在内嵌浏览器里不会随滚动重发通知。终帧没告诉我的事，中帧全说了。</p></div>
+    <h3>上线前的验收清单</h3>
+  </div>
+  <div class="checklist">
+    <label class="check-item"><input type="checkbox" data-key="c01"/><span><b>每个按钮都点过，每条滑杆都拖过</b><small>点击路径全走一遍，包括"重播"和"重置"。</small></span></label>
+    <label class="check-item"><input type="checkbox" data-key="c02"/><span><b>30% / 60% / 终帧 三帧截图体检</b><small>中帧才见鬼——空白的中帧和"看起来对"的终帧同样可疑。</small></span></label>
+    <label class="check-item"><input type="checkbox" data-key="c03"/><span><b>参数拉到极端跑一遍</b><small>0 与最大值都要试；静止帧也要好看。</small></span></label>
+    <label class="check-item"><input type="checkbox" data-key="c04"/><span><b>程序化断言已就位</b><small>排序真的有序、数字真的等于目标——让代码自己作证。</small></span></label>
+    <label class="check-item"><input type="checkbox" data-key="c05"/><span><b>prefers-reduced-motion 下直出静态</b><small>不眩晕，不空转；交互仍然可用。</small></span></label>
+    <label class="check-item"><input type="checkbox" data-key="c06"/><span><b>切到后台标签，rAF 停</b><small>省电也是验收项；回来时动画从当前时刻继续，不是"一口气补帧"。</small></span></label>
+    <label class="check-item"><input type="checkbox" data-key="c07"/><span><b>重播按钮真的能重播</b><small>别只测第一次——重置类名、强制重排的坑都在第二次播放之后。</small></span></label>
+  </div>
+  <div class="reading">
+    <p>这张清单可以照着做，也可以直接发给 Agent——把它当成给动画的"验收规格"，比任何形容词都有效。</p>
+  </div>
+</section>
+</div>
+
+<div class="wrap">
+<section class="chapter" id="ch4">
+  <div class="chapter-head">
+    <div class="chapter-no"><svg class="ch-ic" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 6l14 34H10z" fill="#fffdf7" stroke="#2c4a7c" stroke-width="2" stroke-linejoin="round"/><path d="M17 30h14" stroke="#b7791f" stroke-width="2.6" stroke-linecap="round"/><path d="M20 22h8" stroke="#b7791f" stroke-width="2.4" stroke-linecap="round"/></svg><span>04</span></div>
+    <div>
+      <p class="chapter-label">LIMITS</p>
+      <h2>边界与反例：什么时候把画笔交出去</h2>
+      <p>代码动画是一种偏好，不是宗教信仰。以下场景，请把画笔让给别的媒介。</p>
+      <span class="chapter-stamp">诚实汇报</span>
+    </div>
+  </div>
+  <div class="reading">
+    <div class="cooling">
+      <div class="cooling-row"><small>实拍质感</small><span>光线、皮肤、尘埃、镜头的呼吸——这些属于摄像机。代码能模拟，但没必要。</span></div>
+      <div class="cooling-row"><small>人物表演</small><span>微表情与身体语言是演员的领域；代码动画里的"人物"，通常只是会动的图形符号——用来解释，不用来共情。</span></div>
+      <div class="cooling-row"><small>电影级三维</small><span>复杂流体、布料、毛发解算 → 交给 Blender / Three.js 离线渲染成视频。给你一个真实数字：一段 28 秒的机器演示片，本机无头 GPU 跑了<strong>半个小时</strong>——那种工况，离线渲染才是对的。</span></div>
+      <div class="cooling-row"><small>强叙事广告片</small><span>需要分镜、表演与情绪曲线的时候，视频工作流更成熟。代码动画的长处是"解释与参数"，不是"煽情"。</span></div>
+      <div class="cooling-row"><small>只看一眼的一次性内容</small><span>为一次性动画搭一套参数系统是过度工程；录个 GIF 两分钟的事，别写两百行代码。</span></div>
+    </div>
+    <div class="note"><p>性能与可访问性三条底线：粒子数在移动端保持保守（几百级），canvas 分辨率 DPR 封顶 2×；闪烁频率远离 3–50Hz 的敏感区间；<code>prefers-reduced-motion</code> 时自动动画降级为静态帧、交互照常可用。</p></div>
+    <p>分工不是替代：<strong>视频负责"相信"，代码动画负责"理解"</strong>。一个让你身临其境，一个让你一眼看穿。</p>
+  </div>
+</section>
+</div>
+
+<div class="wrap">
+<section class="ending">
+  <h2>结语：短反馈回路的媒介</h2>
+  <div class="reading">
+    <p>Agent 时代最舒服的媒介，是短反馈回路的媒介。代码动画的每一次迭代都是"改一行、看一眼、再改一行"——这正是 Agent 最强的姿势：它不需要会画画，它需要的是一个<strong>能运行、能观察、能修改</strong>的世界。</p>
+    <p>所以这一页没有一帧是录屏。你从封面滚到这里的过程，就是一次活的证据——包括你刚刚玩过的五个 demo，和此刻仍在背景里呼吸的星空。</p>
+  </div>
+  <figure class="art" style="margin-block:38px">
+    <button class="art-button" type="button" aria-label="放大查看插图"><img src="assets/fig-coda.webp" alt="涂鸦：小机器人站在代码搭成的银幕旁，一排小星星坐着观看" loading="lazy"/><span class="zoom-hint">点击放大 · Esc 关闭</span></button>
+    <figcaption><b>图 1</b>观众已就座——它们等的是一个会动的页面。<small>doodle · 造物手记插图</small></figcaption>
+  </figure>
+  <div class="quickcard">
+    <p class="diagram-label">速查卡 · QUICK REFERENCE</p>
+    <ul>
+      <li>动画指令三件套：<code>运动规格 + 参数面 + 验收面</code></li>
+      <li>中帧截图 ＝ 动画的 code review</li>
+      <li>极端参数跑一遍，再上线</li>
+      <li>运动按时间步长 dt 归一化，永不按帧计数</li>
+      <li>reduced-motion 与后台暂停是底线，不是加分项</li>
+      <li>解释与参数交给代码动画；质感与情绪交给视频</li>
+    </ul>
+  </div>
+  <p class="source-note">文中工具与出处：<a href="https://www.remotion.dev/">Remotion</a>（remotion.dev）· <a href="https://motioncanvas.io/">Motion Canvas</a>（motioncanvas.io）· 3dviz-pro-max（github.com/viettranx/3dviz-pro-max）· machine-skill（github.com/airsuphq/machine-skill）。本页全部 demo 与页面动画由 Agent 现场编写——"跑起来、截帧、改参数、再跑"。</p>
+</section>
+</div>
+
+</main>
+<script id="demos">
+(function(){
+  "use strict";
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var pageVisible = !document.hidden;
+  document.addEventListener("visibilitychange", function(){ pageVisible = !document.hidden; });
+
+  /* ---------- DEMO 01 手写笔触 ---------- */
+  var d1svg = document.getElementById("d1svg"), d1btn = document.getElementById("d1btn");
+  var d1dur = document.getElementById("d1dur"), d1durv = document.getElementById("d1durv");
+  function d1play(){
+    d1svg.classList.remove("d1play");
+    void d1svg.getBoundingClientRect();
+    d1svg.classList.add("d1play");
+  }
+  d1btn.addEventListener("click", d1play);
+  d1dur.addEventListener("input", function(){
+    d1svg.style.setProperty("--d1dur", d1dur.value + "s");
+    d1durv.textContent = (+d1dur.value).toFixed(1) + "s";
+    d1play();
+  });
+  if (!reduce){
+    var d1seen = false;
+    var d1maybe = function(){
+      if (d1seen) return;
+      var r = d1svg.getBoundingClientRect();
+      if (r.top < innerHeight - 40 && r.bottom > 0){ d1seen = true; d1play(); }
+    };
+    addEventListener("scroll", d1maybe, { passive: true });
+    d1maybe();
+  }
+
+  /* ---------- DEMO 02 呼吸的星野 ---------- */
+  var d2 = document.getElementById("d2"), ctx2 = d2.getContext("2d");
+  var d2n = document.getElementById("d2n"), d2s = document.getElementById("d2s"), d2p = document.getElementById("d2p");
+  var d2nv = document.getElementById("d2nv"), d2sv = document.getElementById("d2sv"), d2pv = document.getElementById("d2pv");
+  var sN = 180, sS = 1, sP = 1, mx2 = 0, my2 = 0, stars2 = [], big2 = [];
+  var W2 = d2.width, H2 = d2.height;
+  function buildStars(){
+    stars2 = [];
+    for (var i = 0; i < sN; i++){
+      stars2.push({ x: Math.random()*W2, y: Math.random()*H2, r: 0.6+Math.random()*2.2, p: Math.random()*6.283, s: 0.4+Math.random()*1.2, d: 0.2+Math.random() });
+    }
+    big2 = [];
+    var nb = Math.max(3, Math.round(sN/24));
+    for (var j = 0; j < nb; j++){ big2.push({ x: Math.random()*W2, y: Math.random()*H2, p: Math.random()*6.283, s: 0.5+Math.random()*0.7 }); }
+  }
+  d2.addEventListener("pointermove", function(e){
+    var r = d2.getBoundingClientRect();
+    mx2 = (e.clientX - r.left) / r.width - 0.5;
+    my2 = (e.clientY - r.top) / r.height - 0.5;
+  });
+  function drawStars(t){
+    ctx2.fillStyle = "#0c1830"; ctx2.fillRect(0, 0, W2, H2);
+    var sec = (t / 1000) * sS;
+    for (var i = 0; i < stars2.length; i++){
+      var st = stars2[i];
+      var a = 0.25 + 0.62 * Math.abs(Math.sin(sec*st.s + st.p));
+      var ox = reduce ? 0 : mx2*26*st.d*sP, oy = reduce ? 0 : my2*20*st.d*sP;
+      ctx2.beginPath();
+      ctx2.fillStyle = "rgba(233,228,214," + a.toFixed(3) + ")";
+      ctx2.arc(st.x+ox, st.y+oy, st.r, 0, 6.2832);
+      ctx2.fill();
+    }
+    for (var k = 0; k < big2.length; k++){
+      var b = big2[k];
+      var al = (0.35 + 0.5*Math.abs(Math.sin(sec*b.s + b.p))).toFixed(3);
+      var x = b.x + (reduce ? 0 : mx2*40*sP), y = b.y + (reduce ? 0 : my2*30*sP);
+      ctx2.strokeStyle = "rgba(230,185,92," + al + ")";
+      ctx2.lineWidth = 1.4;
+      ctx2.beginPath();
+      ctx2.moveTo(x-8, y); ctx2.lineTo(x+8, y);
+      ctx2.moveTo(x, y-8); ctx2.lineTo(x, y+8);
+      ctx2.stroke();
+    }
+  }
+  function loop2(t){
+    if (!pageVisible) return;
+    drawStars(t);
+    requestAnimationFrame(loop2);
+  }
+  buildStars();
+  if (reduce){ drawStars(0); } else { requestAnimationFrame(loop2); }
+  d2n.addEventListener("input", function(){ sN = +d2n.value; d2nv.textContent = sN; buildStars(); if (reduce) drawStars(0); });
+  d2s.addEventListener("input", function(){ sS = +d2s.value; d2sv.textContent = sS.toFixed(1) + "×"; if (reduce) drawStars(0); });
+  d2p.addEventListener("input", function(){ sP = +d2p.value; d2pv.textContent = sP.toFixed(1); if (reduce) drawStars(0); });
+
+  /* ---------- DEMO 03 排序竞速 ---------- */
+  var d3 = document.getElementById("d3"), ctx3 = d3.getContext("2d");
+  var d3stat = document.getElementById("d3stat");
+  var d3sp = document.getElementById("d3sp"), d3spv = document.getElementById("d3spv");
+  var W3 = d3.width, H3 = d3.height, N3 = 40;
+  var arr3 = [], ops3 = [], opI = 0, playing3 = false, cmp3 = 0, swp3 = 0, done3 = false;
+  var curCmp = [-1, -1], curSwp = [-1, -1], flow3 = 0, last3 = 0, statT = 0;
+  function shuffle3(){
+    arr3 = [];
+    for (var i = 0; i < N3; i++) arr3.push(6 + Math.round(Math.random()*94));
+    ops3 = []; opI = 0; cmp3 = 0; swp3 = 0; done3 = false; curCmp = [-1,-1]; curSwp = [-1,-1]; playing3 = false;
+    d3stat.textContent = "等待开始——比较 0 · 交换 0";
+    setBtns(false);
+  }
+  function recC(a, b){ ops3.push(["c", a, b]); }
+  function recS(a, b){ ops3.push(["s", a, b]); }
+  function buildOps(kind){
+    var a = arr3.slice();
+    if (kind === "bubble"){
+      for (var i = 0; i < a.length; i++)
+        for (var j = 0; j < a.length-1-i; j++){
+          recC(j, j+1);
+          if (a[j] > a[j+1]){ recS(j, j+1); var t = a[j]; a[j] = a[j+1]; a[j+1] = t; }
+        }
+    } else if (kind === "insert"){
+      for (var i2 = 1; i2 < a.length; i2++){
+        var j2 = i2;
+        while (j2 > 0){ recC(j2-1, j2); if (a[j2-1] > a[j2]){ recS(j2-1, j2); var t2 = a[j2-1]; a[j2-1] = a[j2]; a[j2] = t2; j2--; } else break; }
+      }
+    } else {
+      var q = function(lo, hi){ if (lo >= hi) return; var p = a[hi], i3 = lo;
+        for (var j3 = lo; j3 < hi; j3++){ recC(j3, hi); if (a[j3] < p){ if (i3 !== j3){ recS(i3, j3); var t3 = a[i3]; a[i3] = a[j3]; a[j3] = t3; } i3++; } }
+        if (i3 !== hi){ recS(i3, hi); var t4 = a[i3]; a[i3] = a[hi]; a[hi] = t4; }
+        q(lo, i3-1); q(i3+1, hi);
+      };
+      q(0, a.length-1);
+    }
+  }
+  function setBtns(off){
+    ["d3bubble","d3insert","d3quick"].forEach(function(id){ document.getElementById(id).disabled = off; });
+  }
+  function start3(kind){
+    if (playing3) return;
+    ops3 = []; opI = 0; cmp3 = 0; swp3 = 0; done3 = false; curCmp = [-1,-1]; curSwp = [-1,-1];
+    buildOps(kind);
+    playing3 = true; flow3 = 0; setBtns(true);
+    d3stat.textContent = "进行中……";
+  }
+  function draw3(){
+    ctx3.fillStyle = "#0c1830"; ctx3.fillRect(0, 0, W3, H3);
+    var bw = W3 / N3;
+    for (var i = 0; i < N3; i++){
+      var h = arr3[i] / 100 * (H3 - 40);
+      var x = i * bw + bw*0.12, w = bw*0.76;
+      var col = "#33456b";
+      if (done3) col = "#7fa3d4";
+      if (i === curSwp[0] || i === curSwp[1]) col = "#c8434e";
+      else if (i === curCmp[0] || i === curCmp[1]) col = "#e6b95c";
+      ctx3.fillStyle = col;
+      ctx3.fillRect(x, H3 - 16 - h, w, h);
+    }
+    ctx3.fillStyle = "#22314f"; ctx3.fillRect(0, H3-8, W3, 8);
+  }
+  function loop3(t){
+    if (!pageVisible) return;
+    var dt = Math.min(0.05, (t - last3)/1000 || 0.016); last3 = t;
+    if (playing3){
+      var speed = +d3sp.value;
+      flow3 += dt * speed;
+      while (flow3 >= 1 && opI < ops3.length){
+        flow3 -= 1;
+        var op = ops3[opI++];
+        if (op[0] === "c"){ cmp3++; curCmp = [op[1], op[2]]; }
+        else { swp3++; var ti = op[1], tj = op[2], tv = arr3[ti]; arr3[ti] = arr3[tj]; arr3[tj] = tv; curSwp = [ti, tj]; curCmp = [-1,-1]; }
+      }
+      if (opI >= ops3.length){
+        playing3 = false; done3 = true; curCmp = [-1,-1];
+        var sorted = true;
+        for (var i = 1; i < arr3.length; i++) if (arr3[i-1] > arr3[i]){ sorted = false; break; }
+        d3stat.innerHTML = (sorted ? "✓ 已有序（程序化断言通过）" : "✗ 断言失败") + " · 比较 " + cmp3 + " · 交换 " + swp3;
+        setBtns(false);
+      } else if (t - statT > 160){
+        statT = t;
+        d3stat.textContent = "进行中…… 比较 " + cmp3 + " · 交换 " + swp3;
+      }
+    }
+    draw3();
+    requestAnimationFrame(loop3);
+  }
+  document.getElementById("d3new").addEventListener("click", shuffle3);
+  document.getElementById("d3bubble").addEventListener("click", function(){ start3("bubble"); });
+  document.getElementById("d3insert").addEventListener("click", function(){ start3("insert"); });
+  document.getElementById("d3quick").addEventListener("click", function(){ start3("quick"); });
+  d3sp.addEventListener("input", function(){ d3spv.textContent = d3sp.value + "/秒"; });
+  shuffle3();
+  requestAnimationFrame(function(t){ last3 = t; loop3(t); });
+
+  /* ---------- DEMO 04 数据生长 ---------- */
+  var d4num = document.getElementById("d4num"), d4svg = document.getElementById("d4svg");
+  var d4dot = document.getElementById("d4dot"), d4btn = document.getElementById("d4btn");
+  var d4t = document.getElementById("d4t"), d4tv = document.getElementById("d4tv"), d4stat = document.getElementById("d4stat");
+  var d4target = 128410;
+  function fmt4(v){ return String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+  function d4play(){
+    if (reduce){
+      d4num.textContent = fmt4(d4target);
+      d4svg.classList.add("d4play"); d4dot.style.opacity = "1";
+      d4stat.innerHTML = "✓ " + fmt4(d4target) + "（断言通过 · reduced-motion 直出）";
+      return;
+    }
+    d4svg.classList.remove("d4play"); void d4svg.getBoundingClientRect(); d4svg.classList.add("d4play");
+    d4dot.style.opacity = "0";
+    var t0 = performance.now(), DUR = 1600;
+    function step(t){
+      var p = Math.min(1, (t - t0) / DUR);
+      var e = 1 - Math.pow(2, -10*p);
+      if (p < 1){ d4num.textContent = fmt4(d4target * e); requestAnimationFrame(step); }
+      else {
+        d4num.textContent = fmt4(d4target); d4dot.style.opacity = "1";
+        var ok = (d4num.textContent === fmt4(d4target));
+        d4stat.innerHTML = (ok ? "✓ " + fmt4(d4target) + "（断言通过 · 数字与折线同时到位）" : "✗ 断言失败");
+      }
+    }
+    requestAnimationFrame(step);
+  }
+  d4btn.addEventListener("click", d4play);
+  d4t.addEventListener("input", function(){ d4target = +d4t.value; d4tv.textContent = fmt4(d4target); d4play(); });
+  d4num.textContent = "0"; d4tv.textContent = fmt4(d4target);
+  if (!reduce){
+    var d4seen = false;
+    var d4maybe = function(){ if (d4seen) return; var r = d4svg.getBoundingClientRect(); if (r.top < innerHeight - 40 && r.bottom > 0){ d4seen = true; d4play(); } };
+    addEventListener("scroll", d4maybe, { passive: true });
+    d4maybe();
+  }
+
+  /* ---------- DEMO 05 重力与风 ---------- */
+  var d5 = document.getElementById("d5"), ctx5 = d5.getContext("2d");
+  var W5 = d5.width, H5 = d5.height, parts = [], MAXP = 800;
+  var g5 = 1, w5 = 0.4, last5 = 0;
+  var d5g = document.getElementById("d5g"), d5gv = document.getElementById("d5gv");
+  var d5w = document.getElementById("d5w"), d5wv = document.getElementById("d5wv");
+  function burst(x, y){
+    for (var i = 0; i < 60; i++){
+      var a = -Math.PI/2 + (Math.random() - 0.5) * 1.9;
+      var sp = 150 + Math.random() * 430;
+      parts.push({ x: x, y: y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, age: 0, life: 2.4 + Math.random()*1.3, r: 1.6 + Math.random()*2.4, c: Math.random() < 0.75 ? "230,185,92" : "127,163,212" });
+    }
+    if (parts.length > MAXP) parts.splice(0, parts.length - MAXP);
+  }
+  d5.addEventListener("click", function(e){
+    var r = d5.getBoundingClientRect();
+    burst((e.clientX - r.left) / r.width * W5, (e.clientY - r.top) / r.height * H5);
+  });
+  document.getElementById("d5burst").addEventListener("click", function(){ burst(W5/2, H5*0.72); });
+  d5g.addEventListener("input", function(){ g5 = +d5g.value; d5gv.textContent = g5.toFixed(1); });
+  d5w.addEventListener("input", function(){ w5 = +d5w.value; d5wv.textContent = w5.toFixed(1); });
+  function loop5(t){
+    if (!pageVisible) return;
+    var dt = Math.min(0.033, (t - last5) / 1000 || 0.016); last5 = t;
+    ctx5.fillStyle = "#0c1830"; ctx5.fillRect(0, 0, W5, H5);
+    ctx5.fillStyle = "#16233f"; ctx5.fillRect(0, H5-12, W5, 12);
+    for (var i = parts.length - 1; i >= 0; i--){
+      var p = parts[i];
+      p.vy += g5 * 300 * dt;
+      p.vx += w5 * 160 * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.age += dt;
+      if (p.y > H5 - 12 - p.r){ p.y = H5 - 12 - p.r; p.vy *= -0.6; p.vx *= 0.985; }
+      if (p.x < -60){ p.x = -60; p.vx *= -0.6; }
+      if (p.x > W5 + 60){ p.x = W5 + 60; p.vx *= -0.6; }
+      if (p.age > p.life){ parts.splice(i, 1); continue; }
+      var al = Math.max(0, 1 - p.age / p.life);
+      ctx5.beginPath();
+      ctx5.fillStyle = "rgba(" + p.c + "," + (0.9 * al).toFixed(3) + ")";
+      ctx5.arc(p.x, p.y, p.r, 0, 6.2832);
+      ctx5.fill();
+    }
+    requestAnimationFrame(loop5);
+  }
+  requestAnimationFrame(function(t){ last5 = t; loop5(t); });
+})();
+</script>
+
+
+<footer class="wrap site-foot">
+  <div class="foot-meta">STARRYSEA · 造物手记 · 更新于 2026.10.19<br/>这一页本身就是一次运行中的演示：全部动画由 Agent 现场编写。</div>
+  <button class="print-button" id="printBtn" type="button">打印 / 保存 PDF</button>
+</footer>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="插图预览">
+  <button class="lightbox-close" id="lightboxClose" type="button">关闭 · Esc</button>
+  <img id="lightboxImg" src="" alt=""/>
+  <div class="lightbox-hint">点击背景或按 Esc 关闭</div>
+</div>
+
+<script>
+(function(){
+  var progress=document.getElementById("progress");
+  function onScroll(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    progress.style.transform="scaleX("+(max>0?(h.scrollTop||0)/max:0)+")";
+  }
+  addEventListener("scroll",onScroll,{passive:true});onScroll();
+
+  var lb=document.getElementById("lightbox"),lbImg=document.getElementById("lightboxImg");
+  document.querySelectorAll(".art-button img").forEach(function(img){
+    img.closest("button").addEventListener("click",function(){
+      lbImg.src=img.src;lbImg.alt=img.alt;lb.classList.add("open");document.body.style.overflow="hidden";
+    });
+  });
+  function closeLb(){lb.classList.remove("open");document.body.style.overflow="";}
+  lb.addEventListener("click",function(e){if(e.target!==lbImg)closeLb();});
+  document.getElementById("lightboxClose").addEventListener("click",closeLb);
+  addEventListener("keydown",function(e){if(e.key==="Escape")closeLb();});
+
+  document.querySelectorAll(".copy-button").forEach(function(btn){
+    btn.addEventListener("click",function(){
+      var code=btn.closest(".template").querySelector("pre").innerText;
+      var done=function(){btn.textContent="已复制";setTimeout(function(){btn.textContent="复制";},1600);};
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(done,done);}
+      else{var ta=document.createElement("textarea");ta.value=code;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);done();}
+    });
+  });
+
+  var KEY="cost-notes-checklist",saved={};
+  try{saved=JSON.parse(localStorage.getItem(KEY)||"{}");}catch(e){}
+  document.querySelectorAll(".check-item input").forEach(function(box){
+    var k=box.dataset.key;if(saved[k])box.checked=true;
+    box.addEventListener("change",function(){saved[k]=box.checked;try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}});
+  });
+
+  var reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var fxEls = [].slice.call(document.querySelectorAll(".ch-ic,.death-icon,.step-ic,.checkup,.art,.demo"));
+  if(!reduceMotion && fxEls.length){
+    fxEls.forEach(function(el){ el.classList.add("fx"); });
+    var fxReveal = function(el){
+      if(el.classList.contains("fx-in")) return;
+      el.classList.add("fx-in");
+      setTimeout(function(){ el.classList.remove("fx"); }, 1400);
+    };
+    var fxCheck = function(){
+      var vh = window.innerHeight || document.documentElement.clientHeight;
+      for(var i = 0; i < fxEls.length; i++){
+        var el = fxEls[i];
+        if(el.classList.contains("fx-in")) continue;
+        var r = el.getBoundingClientRect();
+        if(r.top < vh - 30 && r.bottom > 0) fxReveal(el);
+      }
+    };
+    var fxLast = 0;
+    addEventListener("scroll", function(){
+      var now = Date.now();
+      if(now - fxLast > 120){ fxLast = now; fxCheck(); }
+    }, { passive:true });
+    addEventListener("resize", fxCheck);
+    addEventListener("load", fxCheck);
+    fxCheck();
+    var fxBorn = Date.now();
+    var fxTimer = setInterval(function(){
+      fxCheck();
+      if(document.querySelectorAll(".fx").length === 0 || Date.now() - fxBorn > 60000) clearInterval(fxTimer);
+    }, 800);
+  }
+
+  document.getElementById("printBtn").addEventListener("click",function(){window.print();});
+})();
+</script>
+</body>
+</html>
