@@ -775,10 +775,12 @@ caption{text-align:left;padding:12px 0;font-size:12px;color:var(--muted)}
   }
   function loop3(t){
     if (!pageVisible) return;
-    var dt = Math.min(0.05, (t - last3)/1000 || 0.016); last3 = t;
+    var rawDt = Math.min(0.6, (t - last3)/1000 || 0.016);
+    var dt = Math.min(0.05, rawDt);
+    last3 = t;
     if (playing3){
       var speed = +d3sp.value;
-      flow3 += dt * speed;
+      flow3 += rawDt * speed;
       while (flow3 >= 1 && opI < ops3.length){
         flow3 -= 1;
         var op = ops3[opI++];
