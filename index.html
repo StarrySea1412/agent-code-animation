@@ -628,7 +628,17 @@ caption{text-align:left;padding:12px 0;font-size:12px;color:var(--muted)}
   "use strict";
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   var pageVisible = !document.hidden;
-  document.addEventListener("visibilitychange", function(){ pageVisible = !document.hidden; });
+  document.addEventListener("visibilitychange", function(){
+    var nowVisible = !document.hidden;
+    if (nowVisible && !pageVisible){
+      pageVisible = true;
+      requestAnimationFrame(loop2);
+      requestAnimationFrame(loop3);
+      requestAnimationFrame(loop5);
+    } else {
+      pageVisible = nowVisible;
+    }
+  });
 
   /* ---------- DEMO 01 手写笔触 ---------- */
   var d1svg = document.getElementById("d1svg"), d1btn = document.getElementById("d1btn");
